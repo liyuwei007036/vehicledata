@@ -76,11 +76,15 @@ class VehicledataDownloaderMiddleware(object):
         request.headers.setdefault('User-Agent', random.choice(USER_AGENTS))
 
     def process_response(self, request, response, spider):
-        returncode = json.loads(response.text).get('returncode')
-        if response.status != 200 or returncode != 0:
+        try:
+            returncode = json.loads(response.text).get('returncode')
+            if response.status != 200 or returncode != 0:
+                return request
+            else:
+                return response
+        except Exception as e:
+            print(e)
             return request
-        else:
-            return response
 
     def process_exception(self, request, exception, spider):
         pass

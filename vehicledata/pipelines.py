@@ -49,12 +49,14 @@ class VehicledataPipeline(object):
         # 判断系统中是否已存在该父车系 根据che168ID判断
         sys_series = self.mysql.get_parent_series(che168_parent_series_id)
         print(' che168_series_id = {0} 的 父车系为{1}'.format(che168_parent_series_id, sys_series))
-
+        sys_series_id = None
         if not sys_series:
             save = (che168_parent_series_name, che168_parent_series_name, che168_parent_series_id, True, sys_brand[1],
                     sys_brand[0], 0,)
 
-            sys_series = self.mysql.insert_parent_series(save)
+            sys_series_id = self.mysql.insert_parent_series(save)
+        else:
+            sys_series_id = sys_series[0]
 
         itemlist = item['seriesitems']
 
@@ -69,7 +71,7 @@ class VehicledataPipeline(object):
             else:
                 name = i.get('name')
                 data = (
-                    name, name, che168_series_id, True, sys_brand[1], sys_brand[0], i.get('seriesorder'), sys_series[0],
+                    name, name, che168_series_id, True, sys_brand[1], sys_brand[0], i.get('seriesorder'), sys_series_id,
                     self.get_status(i.get('seriesstate')),)
                 ls.append(data)
 
@@ -94,7 +96,8 @@ class VehicledataPipeline(object):
             sys_series_id = dic.get('sys_series_id')
             sys_brand_name = dic.get('sys_brand_name')
             sys_series_name = dic.get('sys_series_name')
-
+            if not seat.isdigit():
+                seat = 4
             data = (
                 model_name, sys_brand_name, che168_model_id, True, sys_brand_name, sys_brand_id,
                 sys_series_id,
@@ -110,7 +113,9 @@ class VehicledataPipeline(object):
         res = requests.get(url=url)
         detail = json.loads(res.text)
         if detail.get('returncode') != 0:
+            print('获取车型详细参数失败 {0}'.format(url))
             raise Exception('获取车型详细参数失败 {0}'.format(url))
+
         result = detail.get('result')
         params = result.get('paramitems')
         configs = result.get('configitems')
