@@ -4,6 +4,7 @@ import re
 import scrapy
 
 from vehicledata.items import VehicleBrand, VehicleSeries, VehicleModel
+from vehicledata.utils import mysql
 
 
 class Vehicle(scrapy.Spider):
@@ -44,17 +45,29 @@ class Vehicle(scrapy.Spider):
     def parse_model(self, response):
         dic = json.loads(response.text)
         result = dic.get('result').get('yearitems')
-        models = []
         series_id = re.match(r'.+value=(\d+)', str(response.url), re.M | re.I).group(1)
+
+        series_info = mysql().get_series_info(series_id)
+
         for m in result:
             # 取得
             l = m.get('specitems')
             for mo in l:
                 mo['che168_series_id'] = series_id
-                models.append(mo)
+                url = 'http://www.autohome.com.cn/ashx/ajaxoil.ashx?type=offical&specId={0}'.format(mo.get('id'))
+                yield scrapy.Request(url=url, callback=self.parse_model2, dont_filter=True,
+                                     meta={'series_info': series_info})
 
+    def parse_model2(self, response):
+        series_info = response.request.meta['series_info']
+        dic = json.loads(response.text)
+        res = dic.get('result')
+        res['sys_brand_id'] = series_info[2]
+        res['sys_brand_name'] = series_info[3]
+        res['sys_series_id'] = series_info[0]
+        res['sys_series_name'] = series_info[1]
         item = VehicleModel()
-        item['json'] = models
+        item['json'] = res
         yield item
 
 

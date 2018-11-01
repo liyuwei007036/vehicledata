@@ -33,21 +33,26 @@ class VehicledataPipeline(object):
         che168_id = itme['che_168_brand_id']
         if not self.mysql.get_brand(che168_id):
             brand = (itme['alias'], int(itme['che_168_brand_id']), itme['initial'], itme['name'], True)
-            sys_brand = self.mysql.insert_brand(brand)
-            print('*' * 40, '保存品牌{0}'.format(sys_brand[1]), '*' * 40)
+            self.mysql.insert_brand(brand)
 
     def save_series(self, item):
+        # 保存父车系
         item = item.get('json')
         che168_parent_series_id = item['id']
         che168_parent_series_name = item['name']
         che168_brand_id = item.get('che168_brand_id')
 
+        # 获取父车系在系统中所对应的品牌ID
         sys_brand = self.mysql.get_brand(che168_brand_id)
+        print(' che168_brand_id = {0} 的 品牌为{1}'.format(che168_brand_id, sys_brand))
+
+        # 判断系统中是否已存在该父车系 根据che168ID判断
         sys_series = self.mysql.get_parent_series(che168_parent_series_id)
+        print(' che168_series_id = {0} 的 父车系为{1}'.format(che168_parent_series_id, sys_series))
 
         if not sys_series:
             save = (che168_parent_series_name, che168_parent_series_name, che168_parent_series_id, True, sys_brand[1],
-                    sys_brand(0), 0,)
+                    sys_brand[0], 0,)
 
             sys_series = self.mysql.insert_parent_series(save)
 
@@ -56,8 +61,10 @@ class VehicledataPipeline(object):
         ls = []
         for i in itemlist:
             che168_series_id = i.get('id')
-            sys_series = self.mysql.get_series(che168_series_id)
-            if sys_series:
+
+            # 判断系统中是否已存在该子车系
+            sys_child_series = self.mysql.get_series(che168_series_id)
+            if sys_child_series:
                 continue
             else:
                 name = i.get('name')
@@ -70,14 +77,49 @@ class VehicledataPipeline(object):
             self.mysql.insert_child_series(ls)
 
     def save_model(self, item):
+        dic = item['json']
+        che168_model_id = dic.get("specid")
+        model = self.mysql.get_model(che168_model_id)
+        model_id = None
+        if not model:
+            model_name = dic.get("specname")
+            body_type = dic.get("levelname")
+            drive_mode = dic.get("specdrivingmodename")
+            structure = dic.get("specstructuretypename")
+            gearbox = dic.get("spectransmission")
+            seat = dic.get("specstructureseat")
+            engine = dic.get("specenginename")
+            emission = dic.get('greenstandards')
+            sys_brand_id = dic.get('sys_brand_id')
+            sys_series_id = dic.get('sys_series_id')
+            sys_brand_name = dic.get('sys_brand_name')
+            sys_series_name = dic.get('sys_series_name')
 
-        for i in item.get('json'):
-            url = 'http://www.autohome.com.cn/ashx/ajaxoil.ashx?type=offical&specId={0}'.format(i.get('id'))
-            response = requests.get(url=url)
-            detail = json.loads(response.content.decode('gb2312'))
-            print(detail)
+            data = (
+                model_name, sys_brand_name, che168_model_id, True, sys_brand_name, sys_brand_id,
+                sys_series_id,
+                sys_series_name, body_type, gearbox, engine, structure, drive_mode, seat, emission,)
+            model_id = self.mysql.insert_model(data)
+        else:
+            model_id = model[0]
+        self.save_model_detail(che168_model_id, model_id)
+
+    def save_model_detail(self, che_168_model_id, model_id):
+        url = 'http://cars.app.autohome.com.cn/cfg_v7.0.0/cars/speccompare.ashx?pm=2&type=1&specids={0}'.format(
+            che_168_model_id)
+        res = requests.get(url=url)
+        detail = json.loads(res.text)
+        if detail.get('returncode') != 0:
+            raise Exception('获取车型详细参数失败 {0}'.format(url))
+        result = detail.get('result')
+        params = result.get('paramitems')
+        configs = result.get('configitems')
+        ls = self.combine_sql(params, model_id)
+        ls.extend(self.combine_sql(configs, model_id))
+        self.mysql.insert_model_detail(ls)
 
     def get_status(self, status):
+        status = int(status)
         if status == 20:
             return '在售'
         elif status == 30:
@@ -86,3 +128,20 @@ class VehicledataPipeline(object):
             return '停售'
         else:
             return '在售'
+
+    def combine_sql(self, params, model_id):
+        list = []
+        for p in params:
+            item_type = p.get("itemtype")
+            for item in p.get('items'):
+                name = item.get('name')
+                value = item.get('modelexcessids')[0].get('value')
+                is_num = value.isdigit()
+                str_value = None
+                num_value = None
+                if (is_num):
+                    num_value = value
+                else:
+                    str_value = value
+                list.append((model_id, item_type, name, is_num, str_value, num_value,))
+        return list
