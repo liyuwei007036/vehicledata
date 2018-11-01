@@ -7,47 +7,38 @@ class mysql:
         self.cursor = self.coon.cursor()
 
     def get_brand(self, che_168_id):
-        sql = 'select id from VehicleBrand where che168_brand_id = %d' % che_168_id
+        sql = 'select id, name from VehicleBrand where che168_brand_id = %d' % che_168_id
         self.cursor.execute(sql)
-        ret = self.cursor.fetchone()
-        if ret:
-            return ret[0]
-        else:
-            return None
+        return self.cursor.fetchone()
 
     def get_series(self, che_168_id):
-        sql = 'select id from VehicleSeries where che168_series_id = %d' % che_168_id
+        sql = 'select id, name from VehicleSeries  where parent_id is not and che168_series_id = %d' % che_168_id
+        self.cursor.execute(sql)
+        return self.cursor.fetchone()
+
+    def get_parent_series(self, che_168_id):
+        sql = 'select id, name from VehicleSeries where parent_id is null and che168_series_id = %d' % che_168_id
         self.cursor.execute(sql)
         ret = self.cursor.fetchone()
-        if ret:
-            return ret[0]
-        else:
-            return None
+        return ret
 
     def get_model(self, che_168_id):
-        sql = 'select id from VehicleModel where che168_model_id = %d' % che_168_id
+        sql = 'select id, name from VehicleModel where che168_model_id = %d' % che_168_id
         self.cursor.execute(sql)
-        ret = self.cursor.fetchone()
-        if ret:
-            return ret[0]
-        else:
-            return None
+        return self.cursor.fetchone()
 
-    # 插入并返回品牌id
     def insert_brand(self, tur):
         sql = 'insert into VehicleBrand (alias, che168_brand_id, initial, name, valid) values (%s, %s, %s ,%s, %s)'
         self.cursor.execute(sql, tur)
         self.coon.commit()
-        last_id = self.cursor.lastrowid
-        return last_id
+        return self.cursor.lastrowid
 
     def insert_parent_series(self, tur):
         sql = 'INSERT INTO VehicleSeries (name, alias, che168_series_id, valid, brand_name, brand_id, sort_order) ' \
               'VALUES(%s, %s, %d, %s, %s, %d, %d)'
         self.cursor.execute(sql, tur)
-        last_id = self.cursor.lastrowid
         self.coon.commit()
-        return last_id
+        return self.cursor.lastrowid
 
     def insert_child_series(self, ls=[]):
         sql = 'INSERT INTO VehicleSeries (name, alias, che168_series_id, valid,  brand_name, brand_id , sort_order, parent_id, status)' \

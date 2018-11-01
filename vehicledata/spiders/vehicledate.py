@@ -3,7 +3,7 @@ import re
 
 import scrapy
 
-from vehicledata.items import VehicleBrand
+from vehicledata.items import VehicleBrand, VehicleSeries, VehicleModel
 
 
 class Vehicle(scrapy.Spider):
@@ -29,8 +29,33 @@ class Vehicle(scrapy.Spider):
     def parse_series(self, response):
         dic = json.loads(response.text)
         result = dic.get('result')
-        id = re.match(r'.+value=(\d+)', str(response.url), re.M | re.I).group()
-        result.put('che168_brand_id', id)
+        id = re.match(r'.+value=(\d+)', str(response.url), re.M | re.I).group(1)
+        for i in result.get('factoryitems'):
+            item = VehicleSeries()
+            i['che168_brand_id'] = id
+            item['json'] = i
+            yield item
+            for j in i.get('seriesitems'):
+                che168_series_id = j.get('id')
+                # 根据车系ID获取车型
+                url = 'http://www.autohome.com.cn/ashx/AjaxIndexCarFind.ashx?type=5&value={0}'.format(che168_series_id)
+                yield scrapy.Request(url=url, callback=self.parse_model, dont_filter=True)
+
+    def parse_model(self, response):
+        dic = json.loads(response.text)
+        result = dic.get('result').get('yearitems')
+        models = []
+        series_id = re.match(r'.+value=(\d+)', str(response.url), re.M | re.I).group(1)
+        for m in result:
+            # 取得
+            l = m.get('specitems')
+            for mo in l:
+                mo['che168_series_id'] = series_id
+                models.append(mo)
+
+        item = VehicleModel()
+        item['json'] = models
+        yield item
 
 
 if __name__ == '__main__':
