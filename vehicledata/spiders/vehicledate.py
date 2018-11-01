@@ -73,5 +73,6 @@ class Vehicle(scrapy.Spider):
 
 if __name__ == '__main__':
     import scrapy.cmdline as line
-
-    line.execute('scrapy crawl car'.split())
+    from datetime import datetime
+    today = datetime.now()
+    line.execute('scrapy crawl car -s LOG_FILE=d:\che168brand-{0}-{1}-{2}-log.log'.format(today.year, today.month, today.day).split())

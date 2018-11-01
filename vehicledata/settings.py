@@ -66,7 +66,8 @@ DOWNLOADER_MIDDLEWARES = {
 ITEM_PIPELINES = {
     'vehicledata.pipelines.VehicledataPipeline': 300,
 }
-LOG_LEVEL = 'ERROR'
+# LOG_LEVEL = 'ERROR'
+# LOG_FILE = 'D:\\error.log'
 
 USER_AGENTS = [
     "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; AcooBrowser; .NET CLR 1.1.4322; .NET CLR 2.0.50727)",
