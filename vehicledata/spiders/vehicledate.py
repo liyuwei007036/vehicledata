@@ -11,7 +11,7 @@ class Vehicle(scrapy.Spider):
     name = "car"
 
     def start_requests(self):
-        url = 'http://www.autohome.com.cn/ashx/AjaxIndexCarFind.ashx?type=1'
+        url = 'https://www.autohome.com.cn/ashx/AjaxIndexCarFind.ashx?type=1'
         yield scrapy.Request(url=url, callback=self.parse_brand, dont_filter=True)
 
     def parse_brand(self, response):
@@ -23,7 +23,7 @@ class Vehicle(scrapy.Spider):
             item['name'] = i.get('name')
             item['alias'] = i.get('name')
             item['initial'] = i.get('bfirstletter')
-            url = 'http://www.autohome.com.cn/ashx/AjaxIndexCarFind.ashx?type=3&value={0}'.format(i.get('id'))
+            url = 'https://www.autohome.com.cn/ashx/AjaxIndexCarFind.ashx?type=3&value={0}'.format(i.get('id'))
             yield item
             yield scrapy.Request(url=url, callback=self.parse_series, dont_filter=True)
 
@@ -39,7 +39,7 @@ class Vehicle(scrapy.Spider):
             for j in i.get('seriesitems'):
                 che168_series_id = j.get('id')
                 # 根据车系ID获取车型
-                url = 'http://www.autohome.com.cn/ashx/AjaxIndexCarFind.ashx?type=5&value={0}'.format(che168_series_id)
+                url = 'https://www.autohome.com.cn/ashx/AjaxIndexCarFind.ashx?type=5&value={0}'.format(che168_series_id)
                 yield scrapy.Request(url=url, callback=self.parse_model, dont_filter=True)
 
     def parse_model(self, response):
@@ -54,7 +54,7 @@ class Vehicle(scrapy.Spider):
             l = m.get('specitems')
             for mo in l:
                 mo['che168_series_id'] = series_id
-                url = 'http://www.autohome.com.cn/ashx/ajaxoil.ashx?type=offical&specId={0}'.format(mo.get('id'))
+                url = 'https://www.autohome.com.cn/ashx/ajaxoil.ashx?type=offical&specId={0}'.format(mo.get('id'))
                 yield scrapy.Request(url=url, callback=self.parse_model2, dont_filter=True,
                                      meta={'series_info': series_info})
 

@@ -105,7 +105,7 @@ class VehicledataPipeline(object):
         self.save_model_detail(che168_model_id, model_id)
 
     def save_model_detail(self, che_168_model_id, model_id):
-        url = 'http://cars.app.autohome.com.cn/cfg_v7.0.0/cars/speccompare.ashx?pm=2&type=1&specids={0}'.format(
+        url = 'https://cars.app.autohome.com.cn/cfg_v7.0.0/cars/speccompare.ashx?pm=2&type=1&specids={0}'.format(
             che_168_model_id)
         res = requests.get(url=url)
         detail = json.loads(res.text)

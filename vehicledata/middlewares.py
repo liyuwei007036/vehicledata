@@ -79,6 +79,8 @@ class VehicledataDownloaderMiddleware(object):
         try:
             returncode = json.loads(response.text).get('returncode')
             if response.status != 200 or returncode != 0:
+                print('-----------------------重新获取 status {0} returncode {1}------------------'.format(response.status,
+                                                                                                       returncode))
                 return request
             else:
                 return response
