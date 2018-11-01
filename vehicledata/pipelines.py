@@ -49,11 +49,9 @@ class VehicledataPipeline(object):
         # 判断系统中是否已存在该父车系 根据che168ID判断
         sys_series = self.mysql.get_parent_series(che168_parent_series_id)
         print(' che168_series_id = {0} 的 父车系为{1}'.format(che168_parent_series_id, sys_series))
-        sys_series_id = None
         if not sys_series:
             save = (che168_parent_series_name, che168_parent_series_name, che168_parent_series_id, True, sys_brand[1],
                     sys_brand[0], 0,)
-
             sys_series_id = self.mysql.insert_parent_series(save)
         else:
             sys_series_id = sys_series[0]
@@ -82,7 +80,6 @@ class VehicledataPipeline(object):
         dic = item['json']
         che168_model_id = dic.get("specid")
         model = self.mysql.get_model(che168_model_id)
-        model_id = None
         if not model:
             model_name = dic.get("specname")
             body_type = dic.get("levelname")
