@@ -70,6 +70,6 @@ class mysql:
         return self.cursor.fetchone()
 
     def get_model_detail_count(self, model_id):
-        sql = 'select count(*) from VehicleModedata where  model_id = %d' % model_id
+        sql = 'select count(*) from VehicleModeldata where  model_id = %d' % model_id
         self.cursor.execute(sql)
         return self.cursor.fetchone()
