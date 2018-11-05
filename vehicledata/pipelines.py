@@ -106,11 +106,8 @@ class VehicledataPipeline(object):
         else:
             model_id = model[0]
         count = self.mysql.get_model_detail_count(model_id)
-        if not count:
+        if not count or count[0] < 1:
             self.save_model_detail(che168_model_id, model_id)
-        else:
-            print('------------------------------ 已存在model_id 为{0} 的详细参数 --------------------------------'.format(
-                model_id))
 
     def save_model_detail(self, che_168_model_id, model_id):
         url = 'https://cars.app.autohome.com.cn/cfg_v7.0.0/cars/speccompare.ashx?pm=2&type=1&specids={0}'.format(
