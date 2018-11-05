@@ -68,3 +68,8 @@ class mysql:
         sql = 'select id, name, brand_id, brand_name from VehicleSeries where parent_id is not null and che168_series_id = %s' % series_id
         self.cursor.execute(sql)
         return self.cursor.fetchone()
+
+    def get_model_detail_count(self, model_id):
+        sql = 'select count(*) from VehicleModedata where  model_id = %d' % model_id
+        self.cursor.execute(sql)
+        return self.cursor.fetchone()

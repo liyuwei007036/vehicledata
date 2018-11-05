@@ -93,8 +93,11 @@ class VehicledataPipeline(object):
             sys_series_id = dic.get('sys_series_id')
             sys_brand_name = dic.get('sys_brand_name')
             sys_series_name = dic.get('sys_series_name')
-            if not seat.isdigit():
-                seat = 4
+            if seat:
+                if not seat.isdigit():
+                    seat = 4
+            else:
+                seat = 0
             data = (
                 model_name, sys_brand_name, che168_model_id, True, sys_brand_name, sys_brand_id,
                 sys_series_id,
@@ -102,7 +105,9 @@ class VehicledataPipeline(object):
             model_id = self.mysql.insert_model(data)
         else:
             model_id = model[0]
-        self.save_model_detail(che168_model_id, model_id)
+        count = self.mysql.get_model_detail_count()
+        if not count:
+            self.save_model_detail(che168_model_id, model_id)
 
     def save_model_detail(self, che_168_model_id, model_id):
         url = 'https://cars.app.autohome.com.cn/cfg_v7.0.0/cars/speccompare.ashx?pm=2&type=1&specids={0}'.format(
@@ -138,7 +143,12 @@ class VehicledataPipeline(object):
             for item in p.get('items'):
                 name = item.get('name')
                 value = item.get('modelexcessids')[0].get('value')
-                is_num = value.isdigit()
+
+                if value:
+                    is_num = value.isdigit()
+                else:
+                    is_num = False
+
                 str_value = None
                 num_value = None
                 if (is_num):
